@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"flag"
 	"net/http"
 	"net/url"
@@ -132,6 +133,8 @@ func main() {
 	var devLogging bool
 	var imagesBindAddr string
 	var imagesPublishAddr string
+	var imagesTLSCertFile string
+	var imagesTLSKeyFile string
 
 	// From CAPI point of view, BMO should be able to watch all namespaces
 	// in case of a deployment that is not multi-tenant. If the deployment
@@ -145,6 +148,10 @@ func main() {
 		"The address the images endpoint binds to.")
 	flag.StringVar(&imagesPublishAddr, "images-publish-addr", "http://127.0.0.1:8084",
 		"The address clients would access the images endpoint from.")
+	flag.StringVar(&imagesTLSCertFile, "images-tls-cert-file", "",
+		"TLS certificate file for the images endpoint.")
+	flag.StringVar(&imagesTLSKeyFile, "images-tls-key-file", "",
+		"TLS private key file for the images endpoint.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(devLogging)))
@@ -181,7 +188,15 @@ func main() {
 			ReadHeaderTimeout: 5 * time.Second,
 		}
 
-		err := server.ListenAndServe()
+		var err error
+		switch {
+		case imagesTLSCertFile == "" && imagesTLSKeyFile == "":
+			err = server.ListenAndServe()
+		case imagesTLSCertFile != "" && imagesTLSKeyFile != "":
+			err = server.ListenAndServeTLS(imagesTLSCertFile, imagesTLSKeyFile)
+		default:
+			err = errors.New("both images-tls-cert-file and images-tls-key-file must be provided")
+		}
 
 		if err != nil {
 			setupLog.Error(err, "")

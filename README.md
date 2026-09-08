@@ -65,6 +65,8 @@ The following command line flags are used for configuration:
   (Defaults to `:8084`.)
 - `-images-publish-addr` --- The address clients would access the images
   endpoint from. (Defaults to `http://127.0.0.1:8084`.)
+- `-images-tls-cert-file` --- TLS certificate file for the images endpoint.
+- `-images-tls-key-file` --- TLS private key file for the images endpoint.
 
 ### Running statically
 
